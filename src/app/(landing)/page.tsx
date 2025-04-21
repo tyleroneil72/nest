@@ -1,3 +1,6 @@
+'use client';
+
+import { signIn } from 'next-auth/react';
 import Image from 'next/image';
 
 export default function Home() {
@@ -10,7 +13,10 @@ export default function Home() {
           Nest helps you visualize your long-term investment growth with meaningful insights, clean charts, and zero
           friction.
         </p>
-        <button className='rounded-full bg-black px-6 py-3 text-sm font-medium text-white transition hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200'>
+        <button
+          onClick={() => signIn('google')}
+          className='rounded-full bg-black px-6 py-3 text-sm font-medium text-white transition hover:bg-neutral-800'
+        >
           Sign in with Google
         </button>
       </div>
