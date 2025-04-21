@@ -15,7 +15,7 @@ export default function Home() {
         </p>
         <button
           onClick={() => signIn('google')}
-          className='rounded-full bg-black px-6 py-3 text-sm font-medium text-white transition hover:bg-neutral-800'
+          className='rounded-full bg-white px-6 py-3 text-sm font-medium text-black transition hover:bg-neutral-200'
         >
           Sign in with Google
         </button>

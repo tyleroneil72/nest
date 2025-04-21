@@ -29,7 +29,7 @@ export default function DashboardPage() {
       <h1 className='text-4xl font-semibold'>Welcome, {session.user?.name}</h1>
       <button
         onClick={() => signOut()}
-        className='rounded-full bg-black px-6 py-3 text-sm font-medium text-white transition hover:bg-neutral-800'
+        className='rounded-full bg-white px-6 py-3 text-sm font-medium text-black transition hover:bg-neutral-200'
       >
         Sign Out
       </button>
