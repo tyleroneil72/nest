@@ -3,11 +3,12 @@
 import { motion } from 'framer-motion';
 import { signIn } from 'next-auth/react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { FaGoogle } from 'react-icons/fa';
 
 export default function Home() {
   return (
-    <div className='relative flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-950 via-neutral-900 to-neutral-950 p-6'>
+    <div className='relative flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-indigo-950 via-neutral-900 to-neutral-950 p-6'>
       {/* Subtle radial glow */}
       <div className='absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-700/10 via-transparent to-transparent'></div>
 
@@ -60,6 +61,14 @@ export default function Home() {
           <FaGoogle className='text-lg' />
           Sign in with Google
         </motion.button>
+
+        <p className='mt-2 text-xs text-gray-400'>
+          By signing in, you agree to our{' '}
+          <Link href='/terms' className='underline transition hover:text-indigo-300'>
+            Terms of Service
+          </Link>
+          .
+        </p>
       </motion.div>
     </div>
   );
