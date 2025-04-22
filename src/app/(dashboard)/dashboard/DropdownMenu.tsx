@@ -29,9 +29,9 @@ export default function DropdownMenu({ image }: { image: string }) {
           <Image
             src={image || '/placeholder-avatar.png'}
             alt='Profile'
-            width={40}
-            height={40}
-            className='rounded-full border border-white shadow-md'
+            width={50}
+            height={50}
+            className='rounded-full shadow-md'
           />
         </button>
 
