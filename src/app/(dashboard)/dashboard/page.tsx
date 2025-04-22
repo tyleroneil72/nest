@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import DropdownMenu from './DropdownMenu';
 import PortfolioInsights from './components/PortfolioInsights';
+import StockTable from './components/StockTable';
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -24,9 +25,10 @@ export default async function DashboardPage() {
         <p className='mt-2 text-sm text-gray-400'>Track your progress and plan your financial future with clarity.</p>
       </div>
 
-      {/* Portfolio Insights Section */}
+      {/* Portfolio Insights & Stock Table Section */}
       <div className='mx-auto w-full max-w-screen-lg'>
         <PortfolioInsights />
+        <StockTable />
       </div>
     </div>
   );
