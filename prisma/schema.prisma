@@ -16,6 +16,29 @@ model User {
   accounts      Account[]
   sessions      Session[]
   createdAt     DateTime  @default(now())
+  portfolios    PortfolioAccount[]
+}
+
+model PortfolioAccount {
+  id         String   @id @default(cuid())
+  userId     String
+  type       String   // e.g., TFSA, RRSP, etc.
+  name       String   // optional label e.g. "Wealthsimple TFSA"
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stocks     StockHolding[]
+}
+
+model StockHolding {
+  id               String   @id @default(cuid())
+  accountId        String
+  ticker           String
+  name             String
+  shares           Float
+  averagePrice     Float
+  totalDividends   Float    @default(0)
+  createdAt        DateTime @default(now())
+  account          PortfolioAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }
 
 model Account {
