@@ -56,7 +56,7 @@ export default function Home() {
             ease: 'easeOut'
           }}
           onClick={() => signIn('google')}
-          className='flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-medium text-black shadow transition hover:bg-neutral-200'
+          className='flex cursor-pointer items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-medium text-black shadow transition hover:bg-neutral-200'
         >
           <FaGoogle className='text-lg' />
           Sign in with Google
