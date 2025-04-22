@@ -2,6 +2,7 @@ import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import DropdownMenu from './DropdownMenu';
+import PortfolioBreakdown from './components/PortfolioBreakdown';
 import PortfolioInsights from './components/PortfolioInsights';
 import StockTable from './components/StockTable';
 
@@ -28,6 +29,7 @@ export default async function DashboardPage() {
       {/* Portfolio Insights & Stock Table Section */}
       <div className='mx-auto w-full max-w-screen-lg'>
         <PortfolioInsights />
+        <PortfolioBreakdown />
         <StockTable />
       </div>
     </div>
