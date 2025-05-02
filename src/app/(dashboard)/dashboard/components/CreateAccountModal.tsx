@@ -8,18 +8,9 @@ interface CreateAccountModalProps {
 }
 
 export default function CreateAccountModal({ onClose, onCreated }: CreateAccountModalProps) {
-  const [form, setForm] = useState({
-    type: '',
-    name: ''
-  });
-
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -29,10 +20,11 @@ export default function CreateAccountModal({ onClose, onCreated }: CreateAccount
       const res = await fetch('/api/accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
+        body: JSON.stringify({ name })
       });
 
-      if (!res.ok) throw new Error('Failed to create account');
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Failed to create account');
 
       if (onCreated) onCreated();
       onClose();
@@ -50,20 +42,11 @@ export default function CreateAccountModal({ onClose, onCreated }: CreateAccount
 
         <div className='space-y-3'>
           <input
-            name='type'
-            placeholder='Account Type (e.g., TFSA)'
-            value={form.type}
-            onChange={handleChange}
+            placeholder='e.g. Wealthsimple TFSA'
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             className='w-full rounded bg-neutral-800 p-2 text-sm'
           />
-          <input
-            name='name'
-            placeholder='Account Label (optional)'
-            value={form.name}
-            onChange={handleChange}
-            className='w-full rounded bg-neutral-800 p-2 text-sm'
-          />
-
           {error && <p className='text-sm text-red-500'>{error}</p>}
         </div>
 
@@ -73,7 +56,7 @@ export default function CreateAccountModal({ onClose, onCreated }: CreateAccount
           </button>
           <button
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || !name}
             className='rounded bg-indigo-600 px-4 py-2 text-sm font-medium hover:bg-indigo-500'
           >
             {loading ? 'Creating...' : 'Add Account'}

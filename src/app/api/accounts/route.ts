@@ -22,7 +22,7 @@ export async function GET() {
 
     const accounts = user.portfolios.map((acc) => ({
       id: acc.id,
-      label: acc.name || acc.type
+      label: acc.name
     }));
 
     return NextResponse.json({ accounts });
@@ -38,25 +38,29 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { type, name } = await req.json();
-
-  if (!type) {
-    return NextResponse.json({ error: 'Account type is required' }, { status: 400 });
+  const { name } = await req.json();
+  if (!name || typeof name !== 'string') {
+    return NextResponse.json({ error: 'Account name is required' }, { status: 400 });
   }
 
   try {
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
+      where: { email: session.user.email },
+      include: { portfolios: true }
     });
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    const exists = user.portfolios.some((acc) => acc.name.toLowerCase() === name.toLowerCase());
+    if (exists) {
+      return NextResponse.json({ error: `You already have an account named "${name}"` }, { status: 400 });
+    }
+
     const newAccount = await prisma.portfolioAccount.create({
       data: {
         userId: user.id,
-        type,
         name
       }
     });

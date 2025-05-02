@@ -63,7 +63,7 @@ export async function GET() {
         shares: stock.shares,
         avgPrice: stock.averagePrice,
         dividendYield: stock.dividendYield,
-        account: portfolio.name || portfolio.type,
+        account: portfolio.name,
         value: stock.shares * stock.averagePrice
       }))
     );
