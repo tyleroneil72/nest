@@ -1,61 +1,122 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-
-const mockGoal = 1_000_000;
-const mockCurrent = 18_073.54;
-const mockMonthlyContribution = 1650;
-const mockGrowthRate = 0.072; // 7.2%
-const mockDividendYield = 0.013;
+import EditGoalModal from './EditGoalModal';
+import EditInsightsModal from './EditInsightsModal';
 
 const MAX_YEARS = 50;
 
-const calculateProjections = () => {
-  const data = [];
-  let totalPortfolio = mockCurrent;
-  let totalContributions = 0;
-  let reachedGoalAt: number | null = null;
+type Stock = {
+  value: number;
+};
 
-  for (let year = 0; year <= MAX_YEARS; year++) {
-    const isFirst = year === 0;
-    const annualContribution = isFirst ? 0 : mockMonthlyContribution * 12;
+type Insights = {
+  goal: number;
+  monthlyContribution: number;
+  growthRate: number;
+  dividendYield: number;
+};
 
-    if (!isFirst) {
-      const growth = totalPortfolio * mockGrowthRate;
-      const dividends = totalPortfolio * mockDividendYield;
-      totalPortfolio += annualContribution + growth + dividends;
-      totalContributions += annualContribution;
-    }
-
-    const returns = totalPortfolio - mockCurrent - totalContributions;
-    const totalValue = mockCurrent + totalContributions + returns;
-
-    if (reachedGoalAt === null && totalValue >= mockGoal) {
-      reachedGoalAt = year;
-    }
-
-    data.push({
-      year: isFirst ? 'Today' : `${year} years`,
-      current: mockCurrent,
-      contributions: totalContributions,
-      returns: returns > 0 ? returns : 0
-    });
-
-    if (reachedGoalAt !== null) break;
-  }
-
-  return {
-    data,
-    yearsToGoal: reachedGoalAt ?? MAX_YEARS
-  };
+type Projection = {
+  year: string;
+  current: number;
+  contributions: number;
+  returns: number;
 };
 
 const PortfolioInsights = () => {
-  const [goal] = useState(mockGoal);
-  const progress = (mockCurrent / goal) * 100;
+  const [stocks, setStocks] = useState<Stock[]>([]);
+  const [insights, setInsights] = useState<Insights | null>(null);
+  const [projections, setProjections] = useState<Projection[]>([]);
+  const [yearsToGoal, setYearsToGoal] = useState<number | null>(null);
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
+  const [isEditingInsights, setIsEditingInsights] = useState(false);
 
-  const { data: projections, yearsToGoal } = calculateProjections();
+  const current = stocks.reduce((sum, stock) => sum + stock.value, 0);
+  const progress = insights?.goal ? (current / insights.goal) * 100 : 0;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const [stocksRes, insightsRes] = await Promise.all([fetch('/api/stocks'), fetch('/api/insights')]);
+
+      const stocksJson = await stocksRes.json();
+      const insightsJson = await insightsRes.json();
+
+      setStocks(stocksJson.stocks || []);
+      setInsights(insightsJson);
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    if (!insights) return;
+
+    const data: Projection[] = [];
+    let portfolio = current;
+    let contributions = 0;
+    let reachedAt: number | null = null;
+
+    for (let year = 0; year <= MAX_YEARS; year++) {
+      const isFirst = year === 0;
+      const annualContribution = isFirst ? 0 : insights.monthlyContribution * 12;
+
+      if (!isFirst) {
+        const growth = portfolio * insights.growthRate;
+        const dividends = portfolio * insights.dividendYield;
+        portfolio += annualContribution + growth + dividends;
+        contributions += annualContribution;
+      }
+
+      const returns = portfolio - current - contributions;
+      const totalValue = current + contributions + returns;
+
+      if (reachedAt === null && totalValue >= insights.goal) {
+        reachedAt = year;
+      }
+
+      data.push({
+        year: isFirst ? 'Today' : `${year} yrs`,
+        current,
+        contributions,
+        returns: returns > 0 ? returns : 0
+      });
+
+      if (reachedAt !== null) break;
+    }
+
+    setProjections(data);
+    setYearsToGoal(reachedAt ?? MAX_YEARS);
+  }, [insights, current]);
+
+  const handleSaveGoal = async (newGoal: number) => {
+    if (!insights) return;
+
+    const updated = { ...insights, goal: newGoal };
+    const res = await fetch('/api/insights', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updated)
+    });
+
+    const json = await res.json();
+    setInsights(json);
+  };
+
+  const handleSaveInsights = async (updatedFields: Omit<Insights, 'goal'>) => {
+    if (!insights) return;
+
+    const updated = { ...insights, ...updatedFields };
+    const res = await fetch('/api/insights', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updated)
+    });
+
+    const json = await res.json();
+    setInsights(json);
+  };
 
   return (
     <div className='rounded-lg border border-neutral-700 bg-neutral-900 p-6 text-white shadow-md'>
@@ -63,16 +124,21 @@ const PortfolioInsights = () => {
       <div className='mb-6'>
         <div className='mb-2 flex items-center justify-between'>
           <h2 className='text-lg font-semibold'>Portfolio Goal</h2>
-          <button className='text-sm text-purple-300 hover:underline'>Edit</button>
+          <button onClick={() => setIsEditingGoal(true)} className='text-sm text-purple-300 hover:underline'>
+            Edit Goal
+          </button>
         </div>
         <div className='text-2xl font-bold text-purple-400'>
-          ${mockCurrent.toLocaleString()} / ${goal.toLocaleString()}
+          ${current.toLocaleString()} / ${insights?.goal.toLocaleString()}
         </div>
         <div className='mt-1 text-sm text-gray-400'>
           You’re aiming to reach this in 🎯 <span className='text-purple-300'>{yearsToGoal} years</span>
         </div>
         <div className='mt-2 h-2 w-full overflow-hidden rounded-full bg-neutral-700'>
-          <div className='h-full bg-purple-500 transition-all' style={{ width: `${progress.toFixed(2)}%` }} />
+          <div
+            className='h-full bg-purple-500 transition-all'
+            style={{ width: `${Math.min(progress, 100).toFixed(2)}%` }}
+          />
         </div>
       </div>
 
@@ -80,11 +146,11 @@ const PortfolioInsights = () => {
       <div className='mb-6'>
         <div className='mb-2 flex items-center justify-between'>
           <h2 className='text-lg font-semibold'>Projections</h2>
-          <button className='text-sm text-purple-300 hover:underline'>Edit</button>
         </div>
         <div className='mb-4 text-gray-300'>
-          You’ll reach your goal of <span className='font-semibold text-purple-300'>${goal.toLocaleString()}</span> in
-          approximately <span className='font-semibold text-purple-300'>{yearsToGoal} years</span> 🎯
+          You’ll reach your goal of{' '}
+          <span className='font-semibold text-purple-300'>${insights?.goal.toLocaleString()}</span> in approximately{' '}
+          <span className='font-semibold text-purple-300'>{yearsToGoal} years</span> 🎯
         </div>
 
         <ResponsiveContainer width='100%' height={300}>
@@ -126,20 +192,43 @@ const PortfolioInsights = () => {
       </div>
 
       {/* Stat Blocks */}
-      <div className='grid grid-cols-1 gap-4 text-center text-sm text-gray-300 sm:grid-cols-3'>
+      <div className='mb-4 grid grid-cols-1 gap-4 text-center text-sm text-gray-300 sm:grid-cols-3'>
         <div className='rounded-md bg-neutral-800 p-3'>
-          💰 <span className='font-medium'>${mockMonthlyContribution}</span>
+          💰 <span className='font-medium'>${insights?.monthlyContribution}</span>
           <div className='text-xs text-gray-400'>Monthly Deposits</div>
         </div>
         <div className='rounded-md bg-neutral-800 p-3'>
-          📈 <span className='font-medium'>{(mockDividendYield * 100).toFixed(1)}%</span>
+          📈 <span className='font-medium'>{((insights?.dividendYield ?? 0) * 100).toFixed(1)}%</span>
           <div className='text-xs text-gray-400'>Dividend Yield</div>
         </div>
         <div className='rounded-md bg-neutral-800 p-3'>
-          📊 <span className='font-medium'>{(mockGrowthRate * 100).toFixed(1)}%</span>
+          📊 <span className='font-medium'>{((insights?.growthRate ?? 0) * 100).toFixed(1)}%</span>
           <div className='text-xs text-gray-400'>Portfolio Growth</div>
         </div>
       </div>
+
+      <div className='flex justify-end'>
+        <button onClick={() => setIsEditingInsights(true)} className='text-sm text-purple-300 hover:underline'>
+          Edit Insights
+        </button>
+      </div>
+
+      {/* Modals */}
+      {isEditingGoal && insights && (
+        <EditGoalModal currentGoal={insights.goal} onClose={() => setIsEditingGoal(false)} onSave={handleSaveGoal} />
+      )}
+
+      {isEditingInsights && insights && (
+        <EditInsightsModal
+          insights={{
+            monthlyContribution: insights.monthlyContribution,
+            growthRate: insights.growthRate,
+            dividendYield: insights.dividendYield
+          }}
+          onClose={() => setIsEditingInsights(false)}
+          onSave={handleSaveInsights}
+        />
+      )}
     </div>
   );
 };

@@ -13,40 +13,14 @@ const COLOURS = [
   '#60a5fa' // Blue
 ];
 
-type BreakdownView = 'combined' | 'TFSA' | 'RRSP' | 'FHSA' | 'Crypto';
+type BreakdownView = 'combined' | string;
 
-const breakdownOptions: BreakdownView[] = ['combined', 'TFSA', 'RRSP', 'FHSA', 'Crypto'];
-
-const mockHoldings: Record<BreakdownView, { name: string; value: number }[]> = {
-  combined: [
-    { name: 'AAPL', value: 15000 },
-    { name: 'GOOGL', value: 12000 },
-    { name: 'BTC', value: 10000 },
-    { name: 'TSLA', value: 9000 },
-    { name: 'ETH', value: 8000 },
-    { name: 'AMZN', value: 7000 },
-    { name: 'MSFT', value: 6000 },
-    { name: 'NFLX', value: 5000 },
-    { name: 'NVDA', value: 4000 },
-    { name: 'XRP', value: 3000 }
-  ],
-  TFSA: [
-    { name: 'AAPL', value: 15000 },
-    { name: 'TSLA', value: 9000 },
-    { name: 'MSFT', value: 6000 }
-  ],
-  RRSP: [
-    { name: 'GOOGL', value: 12000 },
-    { name: 'AMZN', value: 7000 }
-  ],
-  FHSA: [
-    { name: 'VFV', value: 8000 },
-    { name: 'NVDA', value: 4000 }
-  ],
-  Crypto: [
-    { name: 'BTC', value: 10000 },
-    { name: 'XRP', value: 3000 }
-  ]
+type Stock = {
+  id: string;
+  ticker: string;
+  name: string;
+  value: number;
+  account: string;
 };
 
 const MAX_VISIBLE = 6;
@@ -60,12 +34,50 @@ const collapseData = (data: { name: string; value: number }[]) => {
 };
 
 const PortfolioBreakdown = () => {
+  const [stocks, setStocks] = useState<Stock[]>([]);
   const [viewMode, setViewMode] = useState<BreakdownView>('combined');
   const [windowWidth, setWindowWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1200);
 
-  const rawData = mockHoldings[viewMode];
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const fetchStocks = async () => {
+      try {
+        const res = await fetch('/api/stocks');
+        const json = await res.json();
+        setStocks(json.stocks);
+      } catch {
+        console.error('Failed to fetch stocks');
+      }
+    };
+
+    fetchStocks();
+  }, []);
+
+  const accountOptions = Array.from(new Set(stocks.map((s) => s.account)));
+  const breakdownOptions: BreakdownView[] = ['combined', ...accountOptions];
+
+  const filteredStocks = viewMode === 'combined' ? stocks : stocks.filter((stock) => stock.account === viewMode);
+
+  const rawData = Object.values(
+    filteredStocks.reduce(
+      (acc, stock) => {
+        if (!acc[stock.ticker]) {
+          acc[stock.ticker] = { name: stock.ticker, value: 0 };
+        }
+        acc[stock.ticker].value += stock.value;
+        return acc;
+      },
+      {} as Record<string, { name: string; value: number }>
+    )
+  );
+
   const data = collapseData(rawData);
-  const total = rawData.reduce((acc, item) => acc + item.value, 0);
+  const total = data.reduce((acc, item) => acc + item.value, 0);
 
   const formatCompactCurrency = (value: number) =>
     new Intl.NumberFormat('en-US', {
@@ -74,12 +86,6 @@ const PortfolioBreakdown = () => {
       notation: windowWidth <= 768 ? 'compact' : 'standard',
       maximumFractionDigits: 0
     }).format(value);
-
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   return (
     <div className='mt-10 w-full max-w-screen-lg rounded-lg border border-neutral-700 bg-neutral-900 p-6 text-white shadow-md'>
@@ -126,7 +132,6 @@ const PortfolioBreakdown = () => {
                 ))}
               </Pie>
 
-              {/* Total value in center */}
               <text
                 x='50%'
                 y='47%'

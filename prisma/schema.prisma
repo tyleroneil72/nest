@@ -8,52 +8,62 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String             @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?            @unique
   emailVerified DateTime?
   image         String?
   accounts      Account[]
   sessions      Session[]
-  createdAt     DateTime  @default(now())
+  createdAt     DateTime           @default(now())
   portfolios    PortfolioAccount[]
+  insights      UserInsights?
+}
+
+model UserInsights {
+  id                  String @id @default(cuid())
+  userId              String @unique
+  goal                Float  @default(1000000)
+  monthlyContribution Float  @default(1650)
+  growthRate          Float  @default(0.072)
+  dividendYield       Float  @default(0.013)
+  user                User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PortfolioAccount {
-  id         String   @id @default(cuid())
-  userId     String
-  type       String   // e.g., TFSA, RRSP, etc.
-  name       String   // optional label e.g. "Wealthsimple TFSA"
-  createdAt  DateTime @default(now())
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  stocks     StockHolding[]
+  id        String         @id @default(cuid())
+  userId    String
+  name      String // e.g., TFSA, RRSP, etc.
+  createdAt DateTime       @default(now())
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stocks    StockHolding[]
 }
 
 model StockHolding {
-  id               String   @id @default(cuid())
-  accountId        String
-  ticker           String
-  name             String
-  shares           Float
-  averagePrice     Float
-  totalDividends   Float    @default(0)
-  createdAt        DateTime @default(now())
-  account          PortfolioAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  id            String           @id @default(cuid())
+  accountId     String
+  ticker        String
+  name          String
+  shares        Float
+  averagePrice  Float
+  dividendYield Float            @default(0)
+  createdAt     DateTime         @default(now())
+  account       PortfolioAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }
 
 model Account {
-  id                 String   @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?  @db.Text
-  session_state      String?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
