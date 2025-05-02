@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import CreateAccountModal from './CreateAccountModal';
 import CreateStockModal from './CreateStockModal';
+import EditStockModal from './EditStockModal';
 
 type Stock = {
   id: string;
@@ -12,6 +13,7 @@ type Stock = {
   avgPrice: number;
   dividendYield: number;
   account: string;
+  accountId: string;
 };
 
 type AccountOption = {
@@ -25,6 +27,7 @@ const StockTable = () => {
   const [accountOptions, setAccountOptions] = useState<AccountOption[]>([]);
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [editingStock, setEditingStock] = useState<Stock | null>(null);
 
   const filteredStocks =
     selectedAccount === 'All' ? stocks : stocks.filter((stock) => stock.account === selectedAccount);
@@ -132,7 +135,13 @@ const StockTable = () => {
                 <td className='px-4 py-2'>${stock.avgPrice.toLocaleString()}</td>
                 <td className='px-4 py-2'>{stock.dividendYield.toFixed(2)}%</td>
                 <td className='px-4 py-2'>{stock.account}</td>
-                <td className='px-4 py-2'>
+                <td className='space-x-2 px-4 py-2'>
+                  <button
+                    onClick={() => setEditingStock(stock)}
+                    className='rounded bg-yellow-600 px-3 py-1 text-xs font-medium text-white hover:bg-yellow-500'
+                  >
+                    Edit
+                  </button>
                   <button
                     onClick={() => handleDelete(stock.id)}
                     className='rounded bg-red-600 px-3 py-1 text-xs font-medium text-white hover:bg-red-500'
@@ -160,6 +169,17 @@ const StockTable = () => {
           onCreated={() => {
             setIsAccountModalOpen(false);
             fetchAccounts();
+          }}
+        />
+      )}
+      {editingStock && (
+        <EditStockModal
+          stock={editingStock}
+          accountOptions={accountOptions}
+          onClose={() => setEditingStock(null)}
+          onUpdated={() => {
+            setEditingStock(null);
+            refreshStocks();
           }}
         />
       )}
