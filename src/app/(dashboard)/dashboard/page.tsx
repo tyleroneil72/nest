@@ -1,7 +1,7 @@
 import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
-import DropdownMenu from './DropdownMenu';
+import DropdownMenu from './components/DropdownMenu';
 import PortfolioBreakdown from './components/PortfolioBreakdown';
 import PortfolioInsights from './components/PortfolioInsights';
 import StockTable from './components/StockTable';
