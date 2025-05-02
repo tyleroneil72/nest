@@ -53,6 +53,20 @@ const StockTable = () => {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    const confirmDelete = confirm('Are you sure you want to delete this stock?');
+    if (!confirmDelete) return;
+
+    try {
+      const res = await fetch(`/api/stocks/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete');
+      await refreshStocks();
+    } catch (err) {
+      console.error('Delete error:', err);
+      alert('Something went wrong.');
+    }
+  };
+
   useEffect(() => {
     fetchAccounts();
     refreshStocks();
@@ -107,6 +121,7 @@ const StockTable = () => {
               <th className='px-4 py-2'>Average Price</th>
               <th className='px-4 py-2'>Dividend Yield</th>
               <th className='px-4 py-2'>Account</th>
+              <th className='px-4 py-2'>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -118,6 +133,14 @@ const StockTable = () => {
                 <td className='px-4 py-2'>${stock.avgPrice.toLocaleString()}</td>
                 <td className='px-4 py-2'>{stock.dividendYield.toFixed(2)}%</td>
                 <td className='px-4 py-2'>{stock.account}</td>
+                <td className='px-4 py-2'>
+                  <button
+                    onClick={() => handleDelete(stock.id)}
+                    className='rounded bg-red-600 px-3 py-1 text-xs font-medium text-white hover:bg-red-500'
+                  >
+                    Delete
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
