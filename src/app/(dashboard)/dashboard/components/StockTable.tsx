@@ -23,8 +23,6 @@ const StockTable = () => {
   const [selectedAccount, setSelectedAccount] = useState<string>('All');
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [accountOptions, setAccountOptions] = useState<AccountOption[]>([]);
-  const [accountFilters, setAccountFilters] = useState<string[]>(['All']);
-
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
 
@@ -36,8 +34,6 @@ const StockTable = () => {
       const res = await fetch('/api/accounts');
       const json = await res.json();
       setAccountOptions(json.accounts);
-      const dynamicFilters = json.accounts.map((acc: { label: string }) => acc.label);
-      setAccountFilters(['All', ...dynamicFilters]);
     } catch {
       console.error('Failed to load accounts');
     }
@@ -72,21 +68,24 @@ const StockTable = () => {
     refreshStocks();
   }, []);
 
+  // Create a unique list of labels for filtering (deduplicated by name)
+  const filterLabels = ['All', ...Array.from(new Set(accountOptions.map((a) => a.label)))];
+
   return (
     <div className='mt-10 w-full max-w-screen-lg rounded-lg border border-neutral-700 bg-neutral-900 p-6 text-white shadow-md'>
       {/* Filter Tabs */}
       <div className='mb-4 flex flex-wrap gap-2'>
-        {accountFilters.map((account) => (
+        {filterLabels.map((label) => (
           <button
-            key={account}
-            onClick={() => setSelectedAccount(account)}
+            key={label}
+            onClick={() => setSelectedAccount(label)}
             className={`rounded-full px-4 py-1 text-sm font-medium transition ${
-              selectedAccount === account
+              selectedAccount === label
                 ? 'bg-indigo-600 text-white'
                 : 'bg-neutral-800 text-gray-300 hover:bg-neutral-700'
             }`}
           >
-            {account}
+            {label}
           </button>
         ))}
       </div>
