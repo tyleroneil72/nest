@@ -36,7 +36,7 @@ model StockHolding {
   name             String
   shares           Float
   averagePrice     Float
-  totalDividends   Float    @default(0)
+  dividendYield    Float    @default(0)
   createdAt        DateTime @default(now())
   account          PortfolioAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }
