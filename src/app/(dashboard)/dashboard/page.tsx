@@ -14,7 +14,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className='relative min-h-screen bg-neutral-950 px-4 py-6 text-white sm:px-8'>
+    <div className='relative min-h-screen px-4 py-6 text-white sm:px-8'>
       {/* Profile Dropdown in Top Right */}
       <DropdownMenu image={session.user?.image || ''} />
 
