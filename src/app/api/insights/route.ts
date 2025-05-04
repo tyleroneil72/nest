@@ -20,30 +20,37 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const user = await prisma.user.findUnique({ where: { email: session.user.email } });
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    });
+    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-  const body = await req.json();
+    const body = await req.json();
 
-  const updated = await prisma.userInsights.upsert({
-    where: { userId: user.id },
-    update: {
-      goal: body.goal,
-      monthlyContribution: body.monthlyContribution,
-      growthRate: body.growthRate,
-      dividendYield: body.dividendYield
-    },
-    create: {
-      userId: user.id,
-      goal: body.goal,
-      monthlyContribution: body.monthlyContribution,
-      growthRate: body.growthRate,
-      dividendYield: body.dividendYield
-    }
-  });
+    const updated = await prisma.userInsights.upsert({
+      where: { userId: user.id },
+      update: {
+        goal: body.goal,
+        monthlyContribution: body.monthlyContribution,
+        growthRate: body.growthRate,
+        dividendYield: body.dividendYield
+      },
+      create: {
+        userId: user.id,
+        goal: body.goal,
+        monthlyContribution: body.monthlyContribution,
+        growthRate: body.growthRate,
+        dividendYield: body.dividendYield
+      }
+    });
 
-  return NextResponse.json(updated);
+    return NextResponse.json(updated);
+  } catch (error) {
+    console.error('PUT /api/insights error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
 }
